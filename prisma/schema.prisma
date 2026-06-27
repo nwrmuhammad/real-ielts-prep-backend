@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Tariff {
+  XAVASKOR
+  ERKATOY
+}
+
+enum TestStatus {
+  FREE
+  PREDICTED
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE_NG
+  FILL_IN_BLANK
+  MATCHING_HEADINGS
+  MATCHING_INFO
+  SHORT_ANSWER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role             Role      @default(USER)
+  tariff           Tariff    @default(XAVASKOR)
+  tariffExpiresAt  DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt DateTime @updatedAt
+
+  testResults TestResult[]
+}
+
+model Test {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  timeLimit   Int      @default(60)
+  isPublished Boolean    @default(false)
+  status      TestStatus @default(FREE)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime @updatedAt
+
+  passages    Passage[]
+  testResults TestResult[]
+}
+
+model Passage {
+  id        String   @id @default(cuid())
+  testId    String
+  order     Int
+  title     String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  test      Test       @relation(fields: [testId], references: [id], onDelete: Cascade)
+  questions Question[]
+}
+
+model Question {
+  id            String       @id @default(cuid())
+  passageId     String
+  order         Int
+  type          QuestionType
+  questionText  String
+  instruction   String?
+  options       Json?
+  correctAnswer String
+  explanation   String?
+  points        Int          @default(1)
+  createdAt     DateTime     @default(now())
+
+  passage Passage  @relation(fields: [passageId], references: [id], onDelete: Cascade)
+  answers Answer[]
+}
+
+model TestResult {
+  id          String    @id @default(cuid())
+  userId      String
+  testId      String
+  startedAt   DateTime  @default(now())
+  submittedAt DateTime?
+  timeSpent   Int?
+  rawScore    Int       @default(0)
+  totalPoints Int       @default(0)
+  bandScore   Float?
+  completed   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  test    Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  answers Answer[]
+}
+
+model Answer {
+  id           String   @id @default(cuid())
+  testResultId String
+  questionId   String
+  userAnswer   String?
+  isCorrect    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  testResult TestResult @relation(fields: [testResultId], references: [id], onDelete: Cascade)
+  question   Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([testResultId, questionId])
+}
