@@ -50,9 +50,10 @@ model Test {
   title       String
   description String?
   timeLimit   Int      @default(60)
-  isPublished Boolean    @default(false)
-  status      TestStatus @default(FREE)
-  createdAt   DateTime   @default(now())
+  isPublished     Boolean    @default(false)
+  status          TestStatus @default(FREE)
+  passageCategory Int?
+  createdAt       DateTime   @default(now())
   updatedAt   DateTime @updatedAt
 
   passages    Passage[]

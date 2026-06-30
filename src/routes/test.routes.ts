@@ -8,6 +8,7 @@ import {
   updateTest,
   deleteTest,
   addPassage,
+  deletePassage,
   addQuestion,
   updateQuestion,
   deleteQuestion,
@@ -28,6 +29,7 @@ router.put("/:id", authenticate, requireAdmin, updateTest);
 router.delete("/:id", authenticate, requireAdmin, deleteTest);
 
 router.post("/:testId/passages", authenticate, requireAdmin, addPassage);
+router.delete("/passages/:id", authenticate, requireAdmin, deletePassage);
 router.post("/passages/:passageId/questions", authenticate, requireAdmin, addQuestion);
 router.put("/questions/:id", authenticate, requireAdmin, updateQuestion);
 router.delete("/questions/:id", authenticate, requireAdmin, deleteQuestion);

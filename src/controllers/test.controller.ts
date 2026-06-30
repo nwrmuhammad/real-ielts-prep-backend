@@ -79,9 +79,16 @@ export async function getAllTests(req: Request, res: Response) {
 }
 
 export async function createTest(req: Request, res: Response) {
-  const { title, description, timeLimit, status } = req.body as any;
+  const { title, description, timeLimit, status, isPublished, passageCategory } = req.body as any;
   const test = await prisma.test.create({
-    data: { title, description, timeLimit: timeLimit ?? 60, status: status ?? "FREE" },
+    data: {
+      title,
+      description,
+      timeLimit: timeLimit ?? 60,
+      status: status ?? "FREE",
+      isPublished: isPublished !== undefined ? isPublished : true,
+      passageCategory: passageCategory ?? null,
+    },
     include: { _count: { select: { passages: true, testResults: true } } },
   });
   res.status(201).json(test);
@@ -89,10 +96,10 @@ export async function createTest(req: Request, res: Response) {
 
 export async function updateTest(req: Request, res: Response) {
   const id = req.params["id"] as string;
-  const { title, description, timeLimit, isPublished, status } = req.body as any;
+  const { title, description, timeLimit, isPublished, status, passageCategory } = req.body as any;
   const test = await prisma.test.update({
     where: { id },
-    data: { title, description, timeLimit, isPublished, status },
+    data: { title, description, timeLimit, isPublished, status, passageCategory: passageCategory ?? undefined },
   });
   res.json(test);
 }
@@ -133,3 +140,10 @@ export async function deleteQuestion(req: Request, res: Response) {
   await prisma.question.delete({ where: { id } });
   res.json({ message: "Savol o'chirildi" });
 }
+
+export async function deletePassage(req: Request, res: Response) {
+  const id = req.params["id"] as string;
+  await prisma.passage.delete({ where: { id } });
+  res.json({ message: "Passage o'chirildi" });
+}
+

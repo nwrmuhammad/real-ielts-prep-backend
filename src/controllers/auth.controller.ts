@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma";
 import { signToken } from "../utils/jwt";
+import { log } from "console";
 
 export async function register(req: Request, res: Response) {
   const { name, email, password } = req.body;
@@ -52,6 +53,46 @@ export async function login(req: Request, res: Response) {
     token,
     user: { id: user.id, name: user.name, email: user.email, role: user.role, tariff: user.tariff },
   });
+}
+
+export async function updateMe(req: Request, res: Response) {
+  const authReq = req as any;
+  const { name, email, currentPassword, newPassword } = req.body;
+
+  const user = await prisma.user.findUnique({ where: { id: authReq.user.userId } });
+  if (!user) { res.status(404).json({ message: "User topilmadi" }); return; }
+
+  const data: Record<string, unknown> = {};
+
+  if (name && name.trim()) data.name = name.trim();
+
+  if (email && email.trim() && email.trim() !== user.email) {
+    const conflict = await prisma.user.findUnique({ where: { email: email.trim() } });
+    if (conflict) { res.status(409).json({ message: "Bu email allaqachon band" }); return; }
+    data.email = email.trim();
+  }
+
+  if (newPassword) {
+    if (!currentPassword) {
+      res.status(400).json({ message: "Joriy parolni kiriting" }); return;
+    }
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) {
+      res.status(400).json({ message: "Joriy parol noto'g'ri" }); return;
+    }
+    data.password = await bcrypt.hash(newPassword, 12);
+  }
+
+  if (Object.keys(data).length === 0) {
+    res.status(400).json({ message: "O'zgartirish uchun ma'lumot kiriting" }); return;
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: authReq.user.userId },
+    data,
+    select: { id: true, name: true, email: true, role: true, tariff: true, tariffExpiresAt: true, createdAt: true },
+  });
+  res.json(updated);
 }
 
 export async function getMe(req: Request, res: Response) {
