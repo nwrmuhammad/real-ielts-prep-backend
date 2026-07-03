@@ -4,5 +4,5 @@
     "rootDir": ".",
     "lib": ["ES2020", "DOM"]
   },
-  "include": ["prisma/**/*", "generated/**/*"]
+  "include": ["prisma/**/*", "src/generated/**/*"]
 }
