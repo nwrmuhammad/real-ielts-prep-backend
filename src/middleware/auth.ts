@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { verifyToken } from "../utils/jwt";
+import { verifyToken, STUDENT_COOKIE, ADMIN_COOKIE } from "../utils/jwt";
 
 export interface AuthRequest extends Request {
   user?: {
@@ -10,14 +10,14 @@ export interface AuthRequest extends Request {
 }
 
 export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
-  const header = req.headers.authorization;
-  if (!header?.startsWith("Bearer ")) {
+  const cookieName = req.headers["x-auth-scope"] === "admin" ? ADMIN_COOKIE : STUDENT_COOKIE;
+  const token = req.cookies?.[cookieName];
+  if (!token) {
     res.status(401).json({ message: "Token taqdim etilmagan" });
     return;
   }
 
   try {
-    const token = header.split(" ")[1];
     req.user = verifyToken(token);
     next();
   } catch {

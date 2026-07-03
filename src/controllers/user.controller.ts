@@ -18,7 +18,8 @@ const USER_SELECT = {
 async function resolveUser(id: string) {
   const user = await prisma.user.findUnique({ where: { id }, select: USER_SELECT });
   if (!user) return null;
-  if (user.tariff === "ERKATOY" && user.tariffExpiresAt && user.tariffExpiresAt < new Date()) {
+  const isPaid = user.tariff === "ERKATOY" || user.tariff === "AMATEUR";
+  if (isPaid && user.tariffExpiresAt && user.tariffExpiresAt < new Date()) {
     return prisma.user.update({
       where: { id },
       data: { tariff: "XAVASKOR", tariffExpiresAt: null },
@@ -37,7 +38,8 @@ export async function listUsers(req: AuthRequest, res: Response) {
   // auto-expire in-place (no DB writes on list — frontend shows remaining days)
   const now = new Date();
   const result = users.map((u) => {
-    if (u.tariff === "ERKATOY" && u.tariffExpiresAt && u.tariffExpiresAt < now) {
+    const isPaid = u.tariff === "ERKATOY" || u.tariff === "AMATEUR";
+    if (isPaid && u.tariffExpiresAt && u.tariffExpiresAt < now) {
       return { ...u, tariff: "XAVASKOR" as const, tariffExpiresAt: null };
     }
     return u;
@@ -72,7 +74,7 @@ export async function updateUser(req: AuthRequest, res: Response) {
 
   if (tariff) {
     data.tariff = tariff;
-    if (tariff === "ERKATOY") {
+    if (tariff === "ERKATOY" || tariff === "AMATEUR") {
       const expires = new Date();
       expires.setDate(expires.getDate() + 30);
       data.tariffExpiresAt = expires;
