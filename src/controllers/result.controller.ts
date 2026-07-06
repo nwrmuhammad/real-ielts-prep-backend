@@ -44,10 +44,9 @@ export async function submitTest(req: Request, res: Response) {
     res.status(403).json({ message: "Ruxsat yo'q" });
     return;
   }
-  if (testResult.completed) {
-    res.status(400).json({ message: "Test allaqachon topshirilgan" });
-    return;
-  }
+  // Resubmitting an already-completed result is allowed — it's how the
+  // "Analyze" review flow saves edited answers when the student finishes
+  // reviewing.
 
   const allQuestions = testResult.test.passages.flatMap((p) => p.questions);
   const totalPoints = allQuestions.reduce((sum, q) => sum + q.points, 0);
